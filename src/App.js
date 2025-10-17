@@ -1,24 +1,49 @@
-import logo from './logo.svg';
-import './App.css';
+import { MeetingProvider } from "@videosdk.live/react-sdk";
+import { authToken, createMeeting } from "./Api";
+import "./App.css";
+import { useState } from "react";
+
+function ParticipantView(props) {
+  return null;
+}
+
+function Controls(props) {
+  return null;
+}
+
+function JoinScreen({ getMeetingAndToken }) {
+  return null;
+}
+
+function MeetingView(props) {
+  return null;
+}
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+  const [meetingId, setMeetingId] = useState(null);
+
+  const getMeetingAndToken = async (id) => {
+    const meetingId =
+      id == null ? await createMeeting({ token: authToken }) : id;
+    setMeetingId(meetingId);
+  };
+  const onMeetingLeave = () => {
+    setMeetingId(null);
+  };
+  return authToken && meetingId ? (
+    <MeetingProvider
+      config={{
+        meetingId,
+        micEnabled: true,
+        webcamEnabled: true,
+        name: "Adarsh Singh",
+      }}
+      token={authToken}
+    >
+      <MeetingView meetingId={meetingId} onMeetingLeave={onMeetingLeave} />
+    </MeetingProvider>
+  ) : (
+    <JoinScreen getMeetingAndToken={getMeetingAndToken} />
   );
 }
 
