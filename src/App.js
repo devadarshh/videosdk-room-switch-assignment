@@ -119,6 +119,12 @@ function MeetingView({ meetingId, onMeetingLeave, onRoomSwitched }) {
     },
   });
 
+  useEffect(() => {
+    console.log("🚀 Automatically joining meeting:", meetingId);
+    setJoined("JOINING");
+    join();
+  }, []);
+
   const joinMeeting = () => {
     console.log("🚀 Joining meeting...");
     setJoined("JOINING");
