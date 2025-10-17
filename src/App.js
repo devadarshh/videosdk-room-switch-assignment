@@ -9,11 +9,10 @@ import { authToken, createMeeting } from "./Api";
 import "./App.css";
 import { useEffect, useRef, useState } from "react";
 
-function ParticipantView(props) {
+function ParticipantView({ participantId }) {
   const micRef = useRef(null);
-  const { micStream, webcamOn, micOn, isLocal, displayName } = useParticipant(
-    props.participantId
-  );
+  const { micStream, webcamOn, micOn, isLocal, displayName } =
+    useParticipant(participantId);
 
   useEffect(() => {
     if (micRef.current) {
@@ -24,13 +23,14 @@ function ParticipantView(props) {
         micRef.current
           .play()
           .catch((error) =>
-            console.error("videoElem.current.play() failed", error)
+            console.error("audioElem.current.play() failed", error)
           );
       } else {
         micRef.current.srcObject = null;
       }
     }
   }, [micStream, micOn]);
+
   return (
     <div>
       <p>
@@ -40,35 +40,55 @@ function ParticipantView(props) {
       <audio ref={micRef} autoPlay playsInline muted={isLocal} />
       {webcamOn && (
         <VideoPlayer
-          participantId={props.participantId}
+          participantId={participantId}
           type="video"
-          containerStyle={{
-            height: "300px",
-            width: "300px",
-          }}
+          containerStyle={{ height: "300px", width: "300px" }}
           className="h-full"
           classNameVideo="h-full"
-          videoStyle={{}}
         />
       )}
     </div>
   );
 }
 
-function Controls(props) {
-  const { leave, toggleMic, toggleWebcam } = useMeeting();
+function Controls({ newMeetingId, newMeetingToken, onRoomSwitched }) {
+  const { leave, toggleMic, toggleWebcam, switchTo } = useMeeting();
+
+  const handleSwitchRoom = async () => {
+    console.log("🌀 Attempting to switch to new room...");
+    console.log("➡️ New Meeting ID:", newMeetingId);
+    console.log("🔑 Token Provided:", newMeetingToken ? "Yes" : "No");
+
+    try {
+      switchTo({
+        meetingId: newMeetingId,
+        token: newMeetingToken,
+      });
+      console.log("✅ Successfully switched to meeting:", newMeetingId);
+      onRoomSwitched(newMeetingId);
+    } catch (error) {
+      console.error("❌ Error while switching to new meeting:", error);
+    }
+  };
+
   return (
     <div>
       <button onClick={() => leave()}>Leave</button>
-      <button onClick={() => toggleMic()}>toggleMic</button>
-      <button onClick={() => toggleWebcam()}>toggleWebcam</button>
+      <button onClick={() => toggleMic()}>Toggle Mic</button>
+      <button onClick={() => toggleWebcam()}>Toggle Webcam</button>
+      <button onClick={handleSwitchRoom}>Switch Room</button>
     </div>
   );
 }
 
 function JoinScreen({ getMeetingAndToken }) {
   const [meetingId, setMeetingId] = useState(null);
+
   const handleJoinMeeting = async () => {
+    console.log(
+      "🟢 Joining or creating meeting with ID:",
+      meetingId || "(new)"
+    );
     await getMeetingAndToken(meetingId);
   };
 
@@ -77,39 +97,51 @@ function JoinScreen({ getMeetingAndToken }) {
       <input
         type="text"
         placeholder="Enter Meeting Id"
-        onChange={(e) => {
-          setMeetingId(e.target.value);
-        }}
+        onChange={(e) => setMeetingId(e.target.value)}
       />
       <button onClick={handleJoinMeeting}>Join</button>
-      {"or"}
+      {" or "}
       <button onClick={handleJoinMeeting}>Create Meeting</button>
     </div>
   );
 }
 
-function MeetingView(props) {
+function MeetingView({ meetingId, onMeetingLeave, onRoomSwitched }) {
   const [joined, setJoined] = useState(null);
   const { join, participants } = useMeeting({
     onMeetingJoined: () => {
+      console.log("✅ Successfully joined meeting:", meetingId);
       setJoined("JOINED");
     },
     onMeetingLeft: () => {
-      props.onMeetingLeave();
+      console.log("👋 Left meeting:", meetingId);
+      onMeetingLeave();
     },
   });
 
   const joinMeeting = () => {
+    console.log("🚀 Joining meeting...");
     setJoined("JOINING");
     join();
   };
 
+  // Define Room B info for switching
+  const ROOM_B_ID = "5hpm-sohx-dlwe"; // replace with real meeting ID
+  const ROOM_B_TOKEN =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiI3YTQ3YTVhMS0wODczLTQ1NTQtODg4Ni01MDA2M2E4OTRhNGIiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sImlhdCI6MTc2MDY3MjMzOSwiZXhwIjoxNzYxMjc3MTM5fQ.tTaB_5ucB5ieWO3drwxzr6z3zcew0gX7GSXlUUMgVcc"; // replace with real token if required
+
+  console.log("📡 Participants:", participants.size);
+
   return (
     <div className="container">
-      <h3>Meeting Id : {props.meetingId}</h3>
-      {joined && joined === "JOINED" ? (
+      <h3>Meeting Id: {meetingId}</h3>
+      {joined === "JOINED" ? (
         <div>
-          <Controls />
+          <Controls
+            newMeetingId={ROOM_B_ID}
+            newMeetingToken={ROOM_B_TOKEN}
+            onRoomSwitched={onRoomSwitched}
+          />
           {[...participants.keys()].map((participantId) => (
             <ParticipantView
               participantId={participantId}
@@ -117,7 +149,7 @@ function MeetingView(props) {
             />
           ))}
         </div>
-      ) : joined && joined === "JOINING" ? (
+      ) : joined === "JOINING" ? (
         <p>Joining the meeting...</p>
       ) : (
         <button onClick={joinMeeting}>Join</button>
@@ -130,15 +162,25 @@ function App() {
   const [meetingId, setMeetingId] = useState(null);
 
   const getMeetingAndToken = async (id) => {
+    console.log("🧩 getMeetingAndToken called with ID:", id);
     const meetingId =
       id == null ? await createMeeting({ token: authToken }) : id;
+    console.log("✅ Meeting ready, ID:", meetingId);
     setMeetingId(meetingId);
   };
+
   const onMeetingLeave = () => {
+    console.log("👋 Meeting ended, resetting state...");
     setMeetingId(null);
   };
+  const handleRoomSwitch = (newMeetingId) => {
+    console.log("Updating header to new meeting:", newMeetingId);
+    setMeetingId(newMeetingId);
+  };
+
   return authToken && meetingId ? (
     <MeetingProvider
+      key={meetingId}
       config={{
         meetingId,
         micEnabled: true,
@@ -149,7 +191,11 @@ function App() {
     >
       <MeetingConsumer>
         {() => (
-          <MeetingView meetingId={meetingId} onMeetingLeave={onMeetingLeave} />
+          <MeetingView
+            meetingId={meetingId}
+            onMeetingLeave={onMeetingLeave}
+            onRoomSwitched={handleRoomSwitch}
+          />
         )}
       </MeetingConsumer>
     </MeetingProvider>
