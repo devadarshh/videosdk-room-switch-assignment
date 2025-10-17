@@ -12,7 +12,25 @@ function Controls(props) {
 }
 
 function JoinScreen({ getMeetingAndToken }) {
-  return null;
+  const [meetingId, setMeetingId] = useState(null);
+  const handleJoinMeeting = async () => {
+    await getMeetingAndToken(meetingId);
+  };
+
+  return (
+    <div>
+      <input
+        type="text"
+        placeholder="Enter Meeting Id"
+        onChange={(e) => {
+          setMeetingId(e.target.value);
+        }}
+      />
+      <button onClick={handleJoinMeeting}>Join</button>
+      {"or"}
+      <button onClick={handleJoinMeeting}>Create Meeting</button>
+    </div>
+  );
 }
 
 function MeetingView(props) {
