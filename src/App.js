@@ -40,6 +40,7 @@ function ParticipantView(props) {
       <audio ref={micRef} autoPlay playsInline muted={isLocal} />
       {webcamOn && (
         <VideoPlayer
+          participantId={props.participantId}
           type="video"
           containerStyle={{
             height: "300px",
