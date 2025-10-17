@@ -108,7 +108,8 @@ function JoinScreen({ getMeetingAndToken }) {
 
 function MeetingView({ meetingId, onMeetingLeave, onRoomSwitched }) {
   const [joined, setJoined] = useState(null);
-  const { join, participants } = useMeeting({
+
+  const { join, participants, localParticipant } = useMeeting({
     onMeetingJoined: () => {
       console.log("✅ Successfully joined meeting:", meetingId);
       setJoined("JOINED");
@@ -120,23 +121,19 @@ function MeetingView({ meetingId, onMeetingLeave, onRoomSwitched }) {
   });
 
   useEffect(() => {
-    console.log("🚀 Automatically joining meeting:", meetingId);
     setJoined("JOINING");
     join();
   }, []);
 
-  const joinMeeting = () => {
-    console.log("🚀 Joining meeting...");
-    setJoined("JOINING");
-    join();
-  };
-
-  // Define Room B info for switching
-  const ROOM_B_ID = "5hpm-sohx-dlwe"; // replace with real meeting ID
+  const ROOM_B_ID = "5hpm-sohx-dlwe";
   const ROOM_B_TOKEN =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiI3YTQ3YTVhMS0wODczLTQ1NTQtODg4Ni01MDA2M2E4OTRhNGIiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sImlhdCI6MTc2MDY3MjMzOSwiZXhwIjoxNzYxMjc3MTM5fQ.tTaB_5ucB5ieWO3drwxzr6z3zcew0gX7GSXlUUMgVcc"; // replace with real token if required
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiI3YTQ3YTVhMS0wODczLTQ1NTQtODg4Ni01MDA2M2E4OTRhNGIiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sImlhdCI6MTc2MDY3MjMzOSwiZXhwIjoxNzYxMjc3MTM5fQ.tTaB_5ucB5ieWO3drwxzr6z3zcew0gX7GSXlUUMgVcc";
 
-  console.log("📡 Participants:", participants.size);
+  const remoteParticipants = [...participants.keys()].filter(
+    (participantId) => {
+      return participantId !== localParticipant.id;
+    }
+  );
 
   return (
     <div className="container">
@@ -148,17 +145,21 @@ function MeetingView({ meetingId, onMeetingLeave, onRoomSwitched }) {
             newMeetingToken={ROOM_B_TOKEN}
             onRoomSwitched={onRoomSwitched}
           />
-          {[...participants.keys()].map((participantId) => (
+
+          <ParticipantView
+            participantId={localParticipant.id}
+            key={localParticipant.id}
+          />
+
+          {remoteParticipants.map((participantId) => (
             <ParticipantView
               participantId={participantId}
               key={participantId}
             />
           ))}
         </div>
-      ) : joined === "JOINING" ? (
-        <p>Joining the meeting...</p>
       ) : (
-        <button onClick={joinMeeting}>Join</button>
+        <p>Joining the meeting...</p>
       )}
     </div>
   );
@@ -168,19 +169,16 @@ function App() {
   const [meetingId, setMeetingId] = useState(null);
 
   const getMeetingAndToken = async (id) => {
-    console.log("🧩 getMeetingAndToken called with ID:", id);
     const meetingId =
       id == null ? await createMeeting({ token: authToken }) : id;
-    console.log("✅ Meeting ready, ID:", meetingId);
     setMeetingId(meetingId);
   };
 
   const onMeetingLeave = () => {
-    console.log("👋 Meeting ended, resetting state...");
     setMeetingId(null);
   };
+
   const handleRoomSwitch = (newMeetingId) => {
-    console.log("Updating header to new meeting:", newMeetingId);
     setMeetingId(newMeetingId);
   };
 
