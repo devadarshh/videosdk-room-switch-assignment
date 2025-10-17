@@ -1,4 +1,4 @@
-import { MeetingProvider } from "@videosdk.live/react-sdk";
+import { MeetingProvider, useMeeting } from "@videosdk.live/react-sdk";
 import { authToken, createMeeting } from "./Api";
 import "./App.css";
 import { useState } from "react";
@@ -8,7 +8,14 @@ function ParticipantView(props) {
 }
 
 function Controls(props) {
-  return null;
+  const { leave, toggleMic, toggleWebcam } = useMeeting();
+  return (
+    <div>
+      <button onClick={() => leave()}>Leave</button>
+      <button onClick={() => toggleMic()}>toggleMic</button>
+      <button onClick={() => toggleWebcam()}>toggleWebcam</button>
+    </div>
+  );
 }
 
 function JoinScreen({ getMeetingAndToken }) {
@@ -34,7 +41,40 @@ function JoinScreen({ getMeetingAndToken }) {
 }
 
 function MeetingView(props) {
-  return null;
+  const [joined, setJoined] = useState(null);
+  const { join, participants } = useMeeting({
+    onMeetingJoined: () => {
+      setJoined("Joined");
+    },
+    onMeetingLeft: () => {
+      props.onMeetingLeave();
+    },
+  });
+
+  const joinMeeting = () => {
+    setJoined("JOINING");
+    join();
+  };
+  return (
+    <div className="container">
+      <h3>Meeting Id : {props.meetingId}</h3>
+      {joined && joined === "JOINED" ? (
+        <div>
+          <Controls />
+          {[...participants.keys()].map((participantId) => (
+            <ParticipantView
+              participantId={participantId}
+              key={participantId}
+            />
+          ))}
+        </div>
+      ) : joined && joined === "JOINING" ? (
+        <p>Joining the meeting...</p>
+      ) : (
+        <button onClick={joinMeeting}>Join</button>
+      )}
+    </div>
+  );
 }
 
 function App() {
