@@ -32,92 +32,150 @@ function ParticipantView({ participantId }) {
   }, [micStream, micOn]);
 
   return (
-    <div>
-      <p>
-        Participant: {displayName} | Webcam: {webcamOn ? "ON" : "OFF"} | Mic:{" "}
-        {micOn ? "ON" : "OFF"}
+    <div className="participant-card">
+      <p className="participant-name">
+        {displayName}{" "}
+        <span className="participant-type">
+          {isLocal ? "(You)" : "(Remote)"}
+        </span>
       </p>
+      <div className="participant-status">
+        <span>Webcam {webcamOn ? "ON" : "OFF"}</span>
+        <span>Mic {micOn ? "ON" : "OFF"}</span>
+      </div>
       <audio ref={micRef} autoPlay playsInline muted={isLocal} />
       {webcamOn && (
-        <VideoPlayer
-          participantId={participantId}
-          type="video"
-          containerStyle={{ height: "300px", width: "300px" }}
-          className="h-full"
-          classNameVideo="h-full"
-        />
+        <div className="video-container">
+          <VideoPlayer
+            participantId={participantId}
+            type="video"
+            containerStyle={{ height: "240px", width: "100%" }}
+          />
+        </div>
       )}
     </div>
   );
 }
 
-function Controls({ newMeetingId, newMeetingToken, onRoomSwitched }) {
-  const { leave, toggleMic, toggleWebcam, switchTo } = useMeeting();
+function Controls({
+  targetMeetingId,
+  targetMeetingToken,
+  onRoomSwitched,
+  relayActive,
+  setRelayActive,
+}) {
+  const {
+    leave,
+    toggleMic,
+    toggleWebcam,
+    switchTo,
+    requestMediaRelay,
+    stopMediaRelay,
+  } = useMeeting();
+
+  const handleRelayRequest = () => {
+    requestMediaRelay({
+      destinationMeetingId: targetMeetingId,
+      token: targetMeetingToken,
+      kinds: ["audio", "video"],
+    });
+  };
+
+  const handleStopRelay = () => {
+    stopMediaRelay({ destinationMeetingId: targetMeetingId });
+    setRelayActive(false);
+  };
 
   const handleSwitchRoom = async () => {
-    console.log("🌀 Attempting to switch to new room...");
-    console.log("➡️ New Meeting ID:", newMeetingId);
-    console.log("🔑 Token Provided:", newMeetingToken ? "Yes" : "No");
-
     try {
       switchTo({
-        meetingId: newMeetingId,
-        token: newMeetingToken,
+        meetingId: targetMeetingId,
+        token: targetMeetingToken,
       });
-      console.log("✅ Successfully switched to meeting:", newMeetingId);
-      onRoomSwitched(newMeetingId);
+      onRoomSwitched(targetMeetingId);
     } catch (error) {
-      console.error("❌ Error while switching to new meeting:", error);
+      console.error("Error while switching:", error);
     }
   };
 
   return (
-    <div>
-      <button onClick={() => leave()}>Leave</button>
-      <button onClick={() => toggleMic()}>Toggle Mic</button>
-      <button onClick={() => toggleWebcam()}>Toggle Webcam</button>
-      <button onClick={handleSwitchRoom}>Switch Room</button>
+    <div className="controls">
+      <button className="btn btn-red" onClick={() => leave()}>
+        Leave
+      </button>
+      <button className="btn btn-blue" onClick={() => toggleMic()}>
+        Toggle Mic
+      </button>
+      <button className="btn btn-blue" onClick={() => toggleWebcam()}>
+        Toggle Webcam
+      </button>
+      <button className="btn btn-indigo" onClick={handleSwitchRoom}>
+        Switch Room
+      </button>
+      <button
+        className={`btn ${relayActive ? "btn-green-disabled" : "btn-green"}`}
+        onClick={handleRelayRequest}
+        disabled={relayActive}
+      >
+        {relayActive ? "Relay Active" : "Start Media Relay"}
+      </button>
+      {relayActive && (
+        <button className="btn btn-gray" onClick={handleStopRelay}>
+          Stop Relay
+        </button>
+      )}
     </div>
   );
 }
 
 function JoinScreen({ getMeetingAndToken }) {
-  const [meetingId, setMeetingId] = useState(null);
+  const [meetingId, setMeetingId] = useState("");
 
   const handleJoinMeeting = async () => {
-    console.log(
-      "🟢 Joining or creating meeting with ID:",
-      meetingId || "(new)"
-    );
     await getMeetingAndToken(meetingId);
   };
 
   return (
-    <div>
-      <input
-        type="text"
-        placeholder="Enter Meeting Id"
-        onChange={(e) => setMeetingId(e.target.value)}
-      />
-      <button onClick={handleJoinMeeting}>Join</button>
-      {" or "}
-      <button onClick={handleJoinMeeting}>Create Meeting</button>
+    <div className="join-screen">
+      <div className="join-card">
+        <h1>VideoSDK Meeting</h1>
+        <input
+          type="text"
+          placeholder="Enter Meeting ID (optional)"
+          onChange={(e) => setMeetingId(e.target.value)}
+        />
+        <div className="join-buttons">
+          <button className="btn btn-indigo" onClick={handleJoinMeeting}>
+            Join Meeting
+          </button>
+          <button className="btn btn-green" onClick={handleJoinMeeting}>
+            Create Meeting
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
 function MeetingView({ meetingId, onMeetingLeave, onRoomSwitched }) {
   const [joined, setJoined] = useState(null);
+  const [relayActive, setRelayActive] = useState(false);
 
+  const ROOM_B_ID = "gutr-1vfk-opd4";
+  const ROOM_B_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
   const { join, participants, localParticipant } = useMeeting({
     onMeetingJoined: () => {
-      console.log("✅ Successfully joined meeting:", meetingId);
       setJoined("JOINED");
     },
-    onMeetingLeft: () => {
-      console.log("👋 Left meeting:", meetingId);
-      onMeetingLeave();
+    onMeetingLeft: () => onMeetingLeave(),
+    onMediaRelayRequestReceived: ({ accept }) => {
+      accept();
+      setRelayActive(true);
     },
+    onMediaRelayRequestResponse: ({ decision }) => {
+      if (decision === "accepted") setRelayActive(true);
+    },
+    onMediaRelayStopped: () => setRelayActive(false),
   });
 
   useEffect(() => {
@@ -125,41 +183,36 @@ function MeetingView({ meetingId, onMeetingLeave, onRoomSwitched }) {
     join();
   }, []);
 
-  const ROOM_B_ID = "5hpm-sohx-dlwe";
-  const ROOM_B_TOKEN =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiI3YTQ3YTVhMS0wODczLTQ1NTQtODg4Ni01MDA2M2E4OTRhNGIiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sImlhdCI6MTc2MDY3MjMzOSwiZXhwIjoxNzYxMjc3MTM5fQ.tTaB_5ucB5ieWO3drwxzr6z3zcew0gX7GSXlUUMgVcc";
-
   const remoteParticipants = [...participants.keys()].filter(
-    (participantId) => {
-      return participantId !== localParticipant.id;
-    }
+    (id) => id !== localParticipant.id
   );
 
   return (
-    <div className="container">
-      <h3>Meeting Id: {meetingId}</h3>
+    <div className="meeting-container">
+      <h2>
+        Meeting ID: <span className="meeting-id">{meetingId}</span>
+      </h2>
       {joined === "JOINED" ? (
-        <div>
+        <>
           <Controls
-            newMeetingId={ROOM_B_ID}
-            newMeetingToken={ROOM_B_TOKEN}
+            targetMeetingId={ROOM_B_ID}
+            targetMeetingToken={ROOM_B_TOKEN}
             onRoomSwitched={onRoomSwitched}
+            relayActive={relayActive}
+            setRelayActive={setRelayActive}
           />
-
-          <ParticipantView
-            participantId={localParticipant.id}
-            key={localParticipant.id}
-          />
-
-          {remoteParticipants.map((participantId) => (
+          <div className="participants-grid">
             <ParticipantView
-              participantId={participantId}
-              key={participantId}
+              participantId={localParticipant.id}
+              key={localParticipant.id}
             />
-          ))}
-        </div>
+            {remoteParticipants.map((id) => (
+              <ParticipantView key={id} participantId={id} />
+            ))}
+          </div>
+        </>
       ) : (
-        <p>Joining the meeting...</p>
+        <p className="joining-text">Joining the meeting...</p>
       )}
     </div>
   );
@@ -169,18 +222,12 @@ function App() {
   const [meetingId, setMeetingId] = useState(null);
 
   const getMeetingAndToken = async (id) => {
-    const meetingId =
-      id == null ? await createMeeting({ token: authToken }) : id;
-    setMeetingId(meetingId);
+    const meeting = id ? id : await createMeeting({ token: authToken });
+    setMeetingId(meeting);
   };
 
-  const onMeetingLeave = () => {
-    setMeetingId(null);
-  };
-
-  const handleRoomSwitch = (newMeetingId) => {
-    setMeetingId(newMeetingId);
-  };
+  const onMeetingLeave = () => setMeetingId(null);
+  const handleRoomSwitch = (newMeetingId) => setMeetingId(newMeetingId);
 
   return authToken && meetingId ? (
     <MeetingProvider

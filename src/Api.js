@@ -1,5 +1,5 @@
 export const authToken =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiI3YTQ3YTVhMS0wODczLTQ1NTQtODg4Ni01MDA2M2E4OTRhNGIiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sImlhdCI6MTc2MDY3MjMzOSwiZXhwIjoxNzYxMjc3MTM5fQ.tTaB_5ucB5ieWO3drwxzr6z3zcew0gX7GSXlUUMgVcc";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhcGlrZXkiOiJjMmViNmNjOC0yZTk2LTRmZDItYTk4Mi0zZjhmMmIyMzVhZGQiLCJwZXJtaXNzaW9ucyI6WyJhbGxvd19qb2luIl0sImlhdCI6MTc2MDcxNDg1OSwiZXhwIjoxNzYxMzE5NjU5fQ.DGSQteeeFKMTpHDEYuIvhL3-LGa3jVMfq4L99n8qpek";
 
 export const createMeeting = async ({ token }) => {
   const response = await fetch(`https://api.videosdk.live/v2/rooms`, {
