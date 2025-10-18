@@ -1,70 +1,167 @@
-# Getting Started with Create React App
+Perfect 👍 — here’s your **complete single-file `README.md`** ready to **copy and paste directly into GitHub**.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+---
 
-## Available Scripts
+````markdown
+# 🎥 VideoSDK Room Switch Demo (React)
 
-In the project directory, you can run:
+This project demonstrates how to **seamlessly switch a participant from one VideoSDK room to another** without requiring a page reload or full reconnection.  
+It also showcases **Media Relay**, a feature that relays media streams (audio/video) between rooms to maintain real-time continuity.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🚀 Objective
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+Implement functionality to seamlessly switch a participant from one VideoSDK room (Room A) to another (Room B) while maintaining audio/video continuity as much as possible.  
+Additionally, explore and demonstrate the **Media Relay** feature for switching rooms efficiently.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🧠 Features
 
-### `npm run build`
+- Join a VideoSDK meeting (**Room A**)
+- Seamlessly switch to another meeting (**Room B**)
+- Demonstrate **Media Relay** (relay audio/video stream between rooms)
+- Simple, minimal React UI with clear buttons:
+  - **Join Room A**
+  - **Switch to Room B**
+  - **Start Media Relay**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🛠️ Tech Stack
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+- **React.js**
+- **VideoSDK React SDK (`@videosdk.live/react-sdk`)**
+- **Vanilla CSS**
+- **JavaScript (ES6)**
 
-### `npm run eject`
+---
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+## 🧩 Project Setup Steps
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 1️⃣ Clone the Repository
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+```bash
+git clone https://github.com/<your-username>/videosdk-room-switch-demo.git
+cd videosdk-room-switch-demo
+```
+````
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+### 2️⃣ Install Dependencies
 
-## Learn More
+```bash
+npm install
+```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 3️⃣ Set Up Environment Variables
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Create a `.env` file in the project root and add your VideoSDK credentials:
 
-### Code Splitting
+```bash
+REACT_APP_VIDEOSDK_TOKEN=<your_auth_token>
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+You can generate a temporary token from the [VideoSDK Dashboard](https://app.videosdk.live/dashboard).
 
-### Analyzing the Bundle Size
+### 4️⃣ Start the Development Server
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```bash
+npm start
+```
 
-### Making a Progressive Web App
+Your app will be live at:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+```
+http://localhost:3000
+```
 
-### Advanced Configuration
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## 🧭 Implementation Overview
 
-### Deployment
+### 🔹 Normal Room Switching
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+Room switching is achieved using VideoSDK’s `switchTo()` method.
 
-### `npm run build` fails to minify
+**Process:**
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+1. User joins **Room A** using `createMeeting()` and `join()`.
+2. On clicking **Switch Room**, `switchTo(newMeetingId)` is called.
+3. The SDK internally handles disconnection from Room A and reconnection to Room B — maintaining participant state.
+4. The participant is now seamlessly moved to **Room B**.
+
+**Example:**
+
+```js
+await meeting.switchTo({
+  meetingId: targetMeetingId,
+  authToken: authToken,
+});
+```
+
+---
+
+### 🔹 Media Relay Switching
+
+Media Relay allows relaying media streams between rooms without the participant having to leave the first room manually.
+
+**Process:**
+
+1. Media relay is started using the `startMediaRelay()` method.
+2. It relays the participant’s audio and video from **Room A → Room B**.
+3. This approach is ideal for **multi-room broadcasts** or **transition phases**.
+
+**Example:**
+
+```js
+await meeting.startMediaRelay({
+  targetRoomId: targetMeetingId,
+});
+```
+
+---
+
+## 🎬 Demo Scenarios
+
+1. **Normal Room Switching**
+
+   - Join Room A → Switch to Room B using `switchTo()`.
+
+2. **Media Relay**
+
+   - Join Room A → Start Media Relay → Observe audio/video streamed in Room B.
+
+---
+
+## ⚙️ UI Structure
+
+| Button                | Function                                             |
+| --------------------- | ---------------------------------------------------- |
+| **Join Room A**       | Joins the first VideoSDK room.                       |
+| **Switch to Room B**  | Calls `switchTo()` to change room without reloading. |
+| **Start Media Relay** | Starts relaying participant media to another room.   |
+
+---
+
+## 📊 Limitations & Challenges
+
+| Type                    | Description                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| 🔸 Audio/Video Sync     | Minimal delay (~1–2 seconds) may occur during switch.                                |
+| 🔸 SDK Event Handling   | Must rebind `onParticipantJoined` and `onParticipantLeft` after switching.           |
+| 🔸 Media Relay          | One-way only — relay sends media but doesn’t automatically join target room.         |
+| 🔸 Browser Restrictions | Some browsers require fresh permission prompts for webcam/mic after context changes. |
+
+---
+
+## 📘 Differences: Normal Switch vs Media Relay
+
+| Aspect   | Normal Switch (`switchTo`)       | Media Relay (`startMediaRelay`)    |
+| -------- | -------------------------------- | ---------------------------------- |
+| Purpose  | Move participant to another room | Stream audio/video to another room |
+| Control  | Participant fully joins Room B   | Participant stays in Room A        |
+| Latency  | Very low                         | Slightly higher (due to relay)     |
+| Use Case | Room migration                   | Broadcast or linked sessions       |
+
+---
